@@ -1,58 +1,47 @@
-import errno
+import random
 import socket
-# Client side
 import time
-import random 
 
-host, port = "localhost", 5088
-data = "2"
-helped = False
-lastMessage = 0
-#connected = 0
+host = '127.0.0.1'
+port = 1234
+counter = 0
 
-# Create a socket (SOCK_STREAM means a TCP socket)
-with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-    # Connect to server
-    sock.connect((host, port))
-    sock.settimeout(1)
-    #connected = 0
-    #while sock.recv(1024).strip() != "EMPEZAMOS":
-    #    pass
+ClientSocket = socket.socket()
+print('Waiting for connection')
+try:
+    ClientSocket.connect((host, port))
+except socket.error as e:
+    print(str(e))
+while True:
+    counter += 1
+    # Receive message
+    messageBuff = ClientSocket.recv(2048)
+    message = messageBuff.decode('utf-8')
+
+    # If it's the ending message, exit loop
+    if message == 'END':
+        break
+
+    # If it's the 10th message or higher,
+    # the message's id will be the 2 last characters received
+    # else, it'll be the last character received
+    if counter > 10:
+        numMessage = message[-2:]
+    else:
+        numMessage = message[-1]
+
+    print('Message received: ', numMessage)
+    # Sleep random time
+    sleep = random.randint(1,3)
+    time.sleep(sleep)
+
+    # Give random help
+    if random.randint(1,10) <= 3:
+        Input = 'HELP'
+    else:
+        Input = 'NO_HELP'
+    # Send message
+    ClientSocket.send(str.encode(Input))
+    print('My response to message ' + numMessage + ' is ' + Input)
     
-    while helped == False:
-        wakingTime = random.randint(3, 4)
-        #print(wakingTime) ##################################################################################3
-        time.sleep(wakingTime)
-        # Receive the id of the helpMessage
-        #try: 
-        try:
-            received = int (sock.recv(1024)) 
-            #print(received)
-            if random.randint(0,100) <= 30:
-                sock.sendall(bytes( "AYUDO", "utf-8"))
-                print("ayudo con el mensaje ", received)
-            else: 
-                sock.sendall(bytes( "NO AYUDO", "utf-8"))
-                print("NO ayudo con el mensaje ", received)
-        except socket.error as e:
-            if e.args[0] == errno.EWOULDBLOCK:
-                print("HOLI")
-        #received = int (sock.recv(1024)) #decoding
-        
-        #if lastMessage != received:
-            #messageId = int (received)
-            # We send help if the generated number is 30 or less
-            #print("VAMO A COMPROBAR NUMEROS") ##################################################################################3
-                #if random.randint(0,100) <= 30:
-            #print(received)
-            #sock.sendall(bytes( str(received) + "\n", "utf-8")) # coding 
-        #except: sock.sendall(bytes( str(0) + "\n", "utf-8")) # coding
-
-
-
-
-
-#print("Sent:     {}" .format(data))
-#print("Received: {}".format(received)),
-
-#sock.close()
+ClientSocket.close()
